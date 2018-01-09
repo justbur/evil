@@ -8,27 +8,38 @@ env:
   - EMACS_VERSION=24.3
   - EMACS_VERSION=24.5
   - EMACS_VERSION=25.3
-  - EMACS_VERSION=master
-
-matrix:
-  allow_failures:
-    - env: EMACS_VERSION=master
+#  - EMACS_VERSION=master
+#
+#matrix:
+#  allow_failures:
+#    - env: EMACS_VERSION=master
 
 before_install:
-  - sudo apt-get update
+  - sudo apt-get -qq update
+  - sudo apt-get -qq build-dep emacs24  build-essential
   - sudo apt-get install -y aspell aspell-en # required for flyspell test
 
 install:
-  - $CURL -O https://github.com/npostavs/emacs-travis/releases/download/bins/emacs-bin-${EMACS_VERSION}.tar.gz
-  - tar -xaf emacs-bin-${EMACS_VERSION}.tar.gz -C /
-  - export EMACS=/tmp/emacs/bin/emacs
+  - export EMACS_DIR=/tmp/emacs
+  - mkdir "$EMACS_DIR"
+  - export EMACS="$(EMACS_DIR)/bin/emacs"
+  - $CURL -o "/tmp/emacs-$(EMACS_VERSION).tar.xz" \
+  http://ftp.gnu.org/gnu/emacs/emacs-"$EMACS_VERSION".tar.xz
+  - tar xvf "emacs-$(EMACS_VERSION).tar.xz" -C /tmp
+  - pushd "/tmp/$(EMACS_VERSION)"
+  - ./autogen.sh
+  - ./configure
+  - make
+  - sudo make install prefix="$(EMACS_DIR)"
+  - popd
 
 script:
   - $EMACS --version
-  - emacs=$EMACS make test
+  - emacs=$EMACS make test 2>emacs-errors
+  - cat emacs-errors
 
 notifications:
   email:
     # Default is change, but that includes a new branch's 1st success.
-    on_success: never
-    on_failure: always
+    # on_success: never
+    # on_failure: always
