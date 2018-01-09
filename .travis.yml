@@ -25,7 +25,8 @@ install:
 
 script:
   - $EMACS --version
-  - emacs=$EMACS make test
+  - emacs=$EMACS make test 2> emacs-errors
+  - cat emacs-errors
 
 notifications:
   email:
